@@ -1,0 +1,29 @@
+=================== temperature 0.8, prompt 'ROMEO:' ===================
+ROMEO:
+Sold not the as suct of for Romeo so throw.
+Have may she I to ruther see wife of brow:
+Be the braked be dispring the farend, the rice.
+
+DUKE VINCENTIO:
+TyBetiou prison to heart they talk the sir?
+The fortune, so you have say. Thurd no shall thou both
+must many thou spoit with could and and so shall not
+I have wixt my lords be maning in the brack,
+all did pity with not profeser the save: if reven 
+
+=================== temperature 0.5, prompt 'ROMEO:' ===================
+ROMEO:
+So I have her the dread for my his king.
+
+DUKE OF AURLENCE:
+And the perces for the love of the have prose sorrow.
+
+First Claudion:
+Here and may should and which prison to heart the made
+The have marry soul the day for the brother,
+I will this shall all be man with as not with could
+To see the shall not the both have with should of this
+The brack the plaince and so rest and the the say.
+
+FRIAR LAU
+
