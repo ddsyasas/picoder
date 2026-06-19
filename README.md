@@ -14,6 +14,32 @@ single consumer GPU, and even on CPU at the smallest configuration. It is built
 for learning and research, with every design decision written down rather than
 assumed.
 
+## What Picoder is and is not
+
+Picoder is a research baseline, not a drop-in replacement for GPT or Llama.
+Please read this before using it.
+
+**What it is:**
+
+- A tiny (about 0.8M parameter) character-level language model.
+- Trained on a single small corpus (TinyShakespeare, about 1 MB).
+- A transparent, reproducible study of language modeling at "pico" scale.
+
+**What it is not, and cannot do:**
+
+- It does not answer questions, follow instructions, or chat. It has no
+  instruction tuning and no chat format.
+- It has no world knowledge and does no reasoning.
+- It only continues text in the style of its training data, one character at a
+  time. Prompt it with `"ROMEO:"` and it produces Shakespeare-flavored text;
+  prompt it with a real question and it will just keep generating characters,
+  not an answer.
+
+If you need a general-purpose assistant, use a large instruction-tuned model
+(GPT, Llama, etc.). Use Picoder to learn how such models work at the smallest
+honest scale, or as a baseline to build on. The roadmap (subword tokenizer in
+0.2, larger data and models later) is the path toward more capable versions.
+
 ## Status
 
 Version 0.1 is in active development. The first target is a character-level
@@ -39,6 +65,30 @@ python train.py --config configs/pico.yaml
 # 3. Generate text from a saved checkpoint
 python sample.py --checkpoint checkpoints/pico/latest.pt --prompt "ROMEO:" --max-new-tokens 300
 ```
+
+## Use as a library
+
+Once you have a trained checkpoint, load it and generate in a few lines. The
+tokenizer is found automatically next to the checkpoint.
+
+```python
+from src import load
+
+model = load("checkpoints/pico/best.pt")        # device="auto" by default
+text = model.generate(
+    "ROMEO:",
+    max_new_tokens=200,
+    temperature=0.8,   # lower is more conservative, higher is more random
+    top_k=40,          # optional: sample only from the 40 most likely chars
+    seed=1337,         # optional: reproducible output
+)
+print(text)            # the prompt followed by the generated continuation
+```
+
+`load(...)` returns an object exposing `.model`, `.tokenizer`, `.config`, and
+`.device`, plus the `.generate(prompt, ...)` method shown above. Remember
+(see "What Picoder is and is not"): this continues text in the training style,
+it does not answer questions.
 
 ## Layout
 

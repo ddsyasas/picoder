@@ -4,6 +4,7 @@ from .config import PicoderConfig
 from .tokenizer import CharTokenizer
 from .data import Dataset, build_dataset, get_batch, load_corpus
 from .model import Picoder
+from .api import load, LoadedPicoder, resolve_device
 
 __all__ = [
     "PicoderConfig",
@@ -13,4 +14,7 @@ __all__ = [
     "get_batch",
     "load_corpus",
     "Picoder",
+    "load",
+    "LoadedPicoder",
+    "resolve_device",
 ]
