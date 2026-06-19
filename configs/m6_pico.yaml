@@ -1,0 +1,34 @@
+# M6 scaling sweep: PICO config (same architecture as the v0.1 release).
+# Run at the reduced 3000-step budget so it is comparable to the other sweep
+# points. This does NOT touch the frozen checkpoints/pico/ v0.1 release.
+vocab_size: null
+block_size: 128
+n_layer: 4
+n_head: 4
+n_embd: 128
+dropout: 0.1
+tie_weights: true
+
+dataset: tinyshakespeare
+data_dir: data
+val_fraction: 0.1
+
+batch_size: 32
+max_steps: 3000
+learning_rate: 0.0003
+weight_decay: 0.1
+beta1: 0.9
+beta2: 0.99
+grad_clip: 1.0
+warmup_steps: 100
+lr_decay: true
+min_lr: 0.00003
+eval_interval: 500
+eval_iters: 100
+log_interval: 100
+
+seed: 1337
+device: auto
+dtype: float32
+out_dir: checkpoints/m6/pico
+run_name: m6_pico

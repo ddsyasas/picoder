@@ -88,6 +88,8 @@ def main() -> None:
     parser.add_argument("--max-steps", type=int, default=None)
     parser.add_argument("--device", default=None)
     parser.add_argument("--out-dir", default=None)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--run-name", default=None)
     args = parser.parse_args()
 
     cfg = PicoderConfig.from_yaml(args.config)
@@ -97,6 +99,10 @@ def main() -> None:
         cfg.device = args.device
     if args.out_dir is not None:
         cfg.out_dir = args.out_dir
+    if args.seed is not None:
+        cfg.seed = args.seed
+    if args.run_name is not None:
+        cfg.run_name = args.run_name
 
     device = resolve_device(cfg.device)
     torch.manual_seed(cfg.seed)

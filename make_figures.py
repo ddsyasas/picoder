@@ -12,12 +12,16 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import glob
 import json
+import math
 import os
 
 import matplotlib
 matplotlib.use("Agg")  # headless backend, no display needed
 import matplotlib.pyplot as plt
+
+LN2 = math.log(2.0)  # for nats -> bits-per-character conversion
 
 
 def load_log(out_dir: str):
@@ -120,10 +124,97 @@ def fig_loss_vs_time(d, fig_dir: str) -> None:
     save(fig, fig_dir, "fig4_loss_vs_time")
 
 
+def param_count_from_config(cfg_path: str) -> int:
+    """Build the model from a saved config.yaml and count its parameters.
+
+    Imported lazily so the single-run figures do not require torch.
+    """
+    import torch  # noqa: F401  (kept local to avoid a hard dep for other figs)
+    from src.config import PicoderConfig
+    from src.model import Picoder
+    cfg = PicoderConfig.from_yaml(cfg_path)
+    return Picoder(cfg).num_params()
+
+
+def load_m6(m6_dir: str):
+    """Aggregate the M6 scaling sweep: per-config mean/std val loss over seeds.
+
+    Expects run directories named <config>_s<seed> under m6_dir, each with a
+    config.yaml and train_log.jsonl. Returns a list of dicts sorted by parameter
+    count, with best and final val loss summarized across seeds (in nats).
+    """
+    runs: dict[str, list[dict]] = {}
+    for run_dir in sorted(glob.glob(os.path.join(m6_dir, "*_s*"))):
+        log_path = os.path.join(run_dir, "train_log.jsonl")
+        cfg_path = os.path.join(run_dir, "config.yaml")
+        if not (os.path.exists(log_path) and os.path.exists(cfg_path)):
+            continue
+        d = load_log(run_dir)
+        if not d["eval_val"]:
+            continue
+        config = os.path.basename(run_dir).rsplit("_s", 1)[0]
+        runs.setdefault(config, []).append({
+            "best": min(d["eval_val"]),
+            "final": d["eval_val"][-1],
+            "cfg_path": cfg_path,
+        })
+
+    def mean_std(xs):
+        m = sum(xs) / len(xs)
+        var = sum((x - m) ** 2 for x in xs) / len(xs)  # population std (n seeds)
+        return m, var ** 0.5
+
+    out = []
+    for config, rs in runs.items():
+        best = [r["best"] for r in rs]
+        final = [r["final"] for r in rs]
+        bm, bs = mean_std(best)
+        fm, fs = mean_std(final)
+        out.append({
+            "config": config,
+            "n_seeds": len(rs),
+            "params": param_count_from_config(rs[0]["cfg_path"]),
+            "best_mean": bm, "best_std": bs,
+            "final_mean": fm, "final_std": fs,
+        })
+    out.sort(key=lambda r: r["params"])
+    return out
+
+
+def fig_scaling(rows, fig_dir: str) -> None:
+    """Figure 5: best validation loss vs parameter count, with error bars."""
+    params = [r["params"] for r in rows]
+    means = [r["best_mean"] for r in rows]
+    stds = [r["best_std"] for r in rows]
+
+    fig, ax = plt.subplots(figsize=(6.0, 4.0))
+    ax.errorbar(params, means, yerr=stds, marker="o", markersize=5,
+                linewidth=1.5, capsize=4, color="tab:blue")
+    for r in rows:
+        ax.annotate(r["config"].replace("m6_", ""),
+                    xy=(r["params"], r["best_mean"]),
+                    xytext=(6, 6), textcoords="offset points", fontsize=8)
+    ax.set_xscale("log")
+    ax.set_xlabel("parameter count (log scale)")
+    ax.set_ylabel("best validation loss (nats, mean over 3 seeds)")
+    ax.set_title("Picoder: validation loss vs model size (pico scale)")
+    ax.grid(True, which="both", alpha=0.3)
+
+    # Secondary y-axis in bits-per-character for readers who prefer bpc.
+    ax2 = ax.twinx()
+    lo, hi = ax.get_ylim()
+    ax2.set_ylim(lo / LN2, hi / LN2)
+    ax2.set_ylabel("best validation loss (bits per character)")
+
+    save(fig, fig_dir, "fig5_scaling")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate Picoder paper figures.")
     parser.add_argument("--out-dir", default="checkpoints/pico")
     parser.add_argument("--fig-dir", default="docs/figures")
+    parser.add_argument("--m6-dir", default="checkpoints/m6",
+                        help="scaling-sweep dir; if it has runs, add the scaling figure")
     args = parser.parse_args()
 
     os.makedirs(args.fig_dir, exist_ok=True)
@@ -135,8 +226,15 @@ def main() -> None:
     fig_lr_schedule(d, args.fig_dir)
     fig_generalization_gap(d, args.fig_dir)
     fig_loss_vs_time(d, args.fig_dir)
+
+    if os.path.isdir(args.m6_dir):
+        rows = load_m6(args.m6_dir)
+        if rows:
+            fig_scaling(rows, args.fig_dir)
+            print(f"Scaling figure built from {len(rows)} configs in {args.m6_dir}.")
+
     print(f"\nFigures written to {args.fig_dir}/ (PNG + PDF).")
-    print(f"Final val loss: {min(d['eval_val']):.4f}")
+    print(f"Final val loss (single run): {min(d['eval_val']):.4f}")
 
 
 if __name__ == "__main__":

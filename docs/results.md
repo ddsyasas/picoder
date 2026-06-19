@@ -29,9 +29,9 @@ PDF (vector, for LaTeX) in `docs/figures/`.
 0.1 "pico" model (0.818M parameters) on TinyShakespeare. The faint line is the
 raw per-step training loss (logged every 50 steps); the bold markers are the
 train and validation loss measured at each evaluation (every 250 steps, averaged
-over 200 batches). Validation loss decreases monotonically from 4.21 to 1.75 and
-is still falling at step 5000, indicating the model is undertrained rather than
-overfit. Files: `fig1_loss_curves.png`, `fig1_loss_curves.pdf`.
+over 200 batches). Validation loss decreases nearly monotonically (one small
+fluctuation at step 4500) from 4.21 to 1.75 and is still falling at step 5000,
+indicating the model is undertrained rather than overfit. Files: `fig1_loss_curves.png`, `fig1_loss_curves.pdf`.
 
 ## Figure 2: Learning-rate schedule
 
@@ -58,6 +58,18 @@ training length. Files: `fig3_generalization_gap.png`, `fig3_generalization_gap.
 The full 5000-step run completes in about 28 minutes, showing that this "pico"
 configuration is trainable end to end on a consumer CPU. Files:
 `fig4_loss_vs_time.png`, `fig4_loss_vs_time.pdf`.
+
+## Figure 5: Validation loss versus model size
+
+![Validation loss vs parameter count](figures/fig5_scaling.png)
+
+**Caption.** Best validation loss versus parameter count for four configurations
+(112K, 354K, 818K, and 2.71M parameters), each trained with three seeds at an
+equal 3000-step budget; error bars show the standard deviation over seeds (they
+are smaller than the markers). Loss falls almost linearly in the log of the
+parameter count, about -0.47 nats (-0.68 bits per character) per tenfold
+increase, with no sign of saturation across this range. The right axis shows the
+same values in bits per character. Files: `fig5_scaling.png`, `fig5_scaling.pdf`.
 
 ## Reproducing the figures
 
